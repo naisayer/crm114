@@ -12,7 +12,7 @@ module Classifier
     CMD_CSSUTIL = '/usr/bin/cssutil'
     OPT_SIZE = ' -s '
 
-    CMD_BATCH_LEARN = ' %s --spam=%s --good=%s %s '
+    CMD_BATCH_LEARN = ' %s --spam=%s --good=%s --spamcss=%s --goodcss=%s %s '
 
     ##
     # Returns a string containg the installed CRM114 engine version in a
@@ -63,13 +63,16 @@ module Classifier
     alias_method :train!, :learn!
 
 
-    def batch_learn!(trainer, spam_dir, notspam_dir, options={})
+    def batch_learn!(trainer, spam_dir, notspam_dir, category, options={})
       option_string = ""
+
       option.each do |key,value|
        options_string = "--#{key}=#{value}"
       end
-      cmd = CMD_CRM + CMD_BATCH_LEARN % [trainer,spam_dir,notspam_dir,options_string]
+      
+      cmd = CMD_CRM + CMD_BATCH_LEARN % [trainer,spam_dir,notspam_dir,css_file_path(category),options_string]
       puts cmd if @debug
+
       Open3.popen3(cmd) do |stdin,stdout,stderr|
         stdin.write(text)
         stdin.close
