@@ -10,9 +10,10 @@ module Classifier
     OPT_CLASSIFY = '-{ isolate (:stats:); classify %s ( %s ) (:stats:); match [:stats:] (:: :best: :prob:) /Best match to file .. \\(%s\\/([[:graph:]]+)\\%s\\) prob: ([0-9.]+)/; output /:*:best:\\t:*:prob:/ }'
 
     CMD_CSSUTIL = '/usr/bin/cssutil'
-    OPT_SIZE = ' -s '
+    OPT_SIZE = ' -r -s '
 
-    CMD_BATCH_LEARN = ' %s --spam=%s --good=%s --spamcss=%s --goodcss=%s %s '
+    #seems to need a couple of files in the current working dir
+    CMD_BATCH_LEARN = " cd %s; #{CMD_CRM} %s --spam=%s --good=%s --spamcss=%s --goodcss=%s %s "
 
     ##
     # Returns a string containg the installed CRM114 engine version in a
@@ -34,8 +35,12 @@ module Classifier
       @categories = categories.to_a.collect { |category| category.to_s.to_sym }
       @path = File.expand_path(options[:path] || '.')
 
-      categories.each do |category|
-        create_css_file(css_file_path(category),{:size=>options[:size]}) unless options[:append] && File.exists(css_file_path(category))
+      if Dir.exists? @path
+        @categories.each do |category|
+          CRM114.create_css_file(css_file_path(category),{:size=>options[:size]}) unless options[:append] && File.exists?(css_file_path(category))
+        end
+      else
+        puts "Dir #{@path} does NOT exist."
       end
 
       @debug = options[:debug] || false
@@ -63,22 +68,22 @@ module Classifier
     alias_method :train!, :learn!
 
 
-    def batch_learn!(trainer, spam_dir, notspam_dir, category, options={})
-      option_string = ""
+    def batch_learn!(trainer, spam_dir, notspam_dir, category, operating_dir, options={})
+      options_string = ""
 
-      option.each do |key,value|
-       options_string = "--#{key}=#{value}"
+      options.each do |key,value|
+       options_string += " --#{key}=#{value} "
       end
-      
-      cmd = CMD_CRM + CMD_BATCH_LEARN % [trainer,spam_dir,notspam_dir,css_file_path(category),options_string]
+
+      cmd = (CMD_BATCH_LEARN % [operating_dir, trainer, spam_dir, notspam_dir, css_file_path(category), css_file_path("ok"),options_string])
       puts cmd if @debug
 
       Open3.popen3(cmd) do |stdin,stdout,stderr|
-        stdin.write(text)
         stdin.close
         @result, @err = stdout.read, stderr.read
         puts "CRM114(batch_learn!) ERROR: #{@err}" if @err.size > 0
       end
+      puts @result
     end
 
     alias_method :batch_train!, :batch_learn!
@@ -133,13 +138,13 @@ module Classifier
       # @param  [String] file
       # @return [void]
       def self.create_css_file(file,options={})
-        if options[:size].blank?
+        if options[:size].nil?
           cmd = CMD_CRM + " '" + (OPT_LEARN % [CLASSIFICATION_TYPE, file]) + "'"
         else
-          cmd = CMD_CSSUTIL + OPT_SIZE + options[:size] + " #{file} " 
+          cmd = CMD_CSSUTIL + OPT_SIZE + options[:size].to_s + " #{file} " 
         end
         puts cmd if @debug
-        IO.popen(cmd, 'w') { |pipe| pipe.close } unless cmd.blank?
+        IO.popen(cmd, 'w') { |pipe| pipe.close } unless cmd.nil?
       end
 
       ##
