@@ -34,16 +34,16 @@ module Classifier
     def initialize(categories, options = {})
       @categories = categories.to_a.collect { |category| category.to_s.to_sym }
       @path = File.expand_path(options[:path] || '.')
+      @debug = options[:debug] || false
 
       if Dir.exists? @path
         @categories.each do |category|
-          CRM114.create_css_file(css_file_path(category),{:size=>options[:size]}) unless options[:append] && File.exists?(css_file_path(category))
+          puts "creating category css file"
+          CRM114.create_css_file(css_file_path(category),{:size=>options[:size]}) unless File.exists?(css_file_path(category))
         end
       else
         puts "Dir #{@path} does NOT exist."
       end
-
-      @debug = options[:debug] || false
     end
 
     ##
