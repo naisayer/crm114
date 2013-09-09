@@ -33,6 +33,11 @@ module Classifier
     def initialize(categories, options = {})
       @categories = categories.to_a.collect { |category| category.to_s.to_sym }
       @path = File.expand_path(options[:path] || '.')
+
+      categories.each do |category|
+        create_css_file(css_file_path(category),{:size=>options[:size]}) unless options[:append] && File.exists(css_file_path(category))
+      end
+
       @debug = options[:debug] || false
     end
 
@@ -128,9 +133,7 @@ module Classifier
         if options[:size].blank?
           cmd = CMD_CRM + " '" + (OPT_LEARN % [CLASSIFICATION_TYPE, file]) + "'"
         else
-          unless File.exist? file
-            cmd = CMD_CSSUTIL + OPT_SIZE + options[:size] + " #{file} " 
-          end
+          cmd = CMD_CSSUTIL + OPT_SIZE + options[:size] + " #{file} " 
         end
         puts cmd if @debug
         IO.popen(cmd, 'w') { |pipe| pipe.close } unless cmd.blank?
