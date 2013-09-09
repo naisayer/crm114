@@ -4,9 +4,15 @@ module Classifier
   class CRM114
     CLASSIFICATION_TYPE = '<osb unique microgroom>'
     FILE_EXTENSION = '.css'
+
     CMD_CRM = '/usr/bin/env crm'
     OPT_LEARN = '-{ learn %s ( %s ) }'
     OPT_CLASSIFY = '-{ isolate (:stats:); classify %s ( %s ) (:stats:); match [:stats:] (:: :best: :prob:) /Best match to file .. \\(%s\\/([[:graph:]]+)\\%s\\) prob: ([0-9.]+)/; output /:*:best:\\t:*:prob:/ }'
+
+    CMD_CSSUTIL = '/usr/bin/cssutil'
+    OPT_SIZE = ' -s '
+
+    CMD_BATCH_LEARN = ' %s --spam=%s --good=%s %s '
 
     ##
     # Returns a string containg the installed CRM114 engine version in a
@@ -50,6 +56,24 @@ module Classifier
     end
 
     alias_method :train!, :learn!
+
+
+    def batch_learn!(trainer, spam_dir, notspam_dir, options={})
+      option_string = ""
+      option.each do |key,value|
+       options_string = "--#{key}=#{value}"
+      end
+      cmd = CMD_CRM + CMD_BATCH_LEARN % [trainer,spam_dir,notspam_dir,options_string]
+      puts cmd if @debug
+      Open3.popen3(cmd) do |stdin,stdout,stderr|
+        stdin.write(text)
+        stdin.close
+        @result, @err = stdout.read, stderr.read
+        puts "CRM114(batch_learn!) ERROR: #{@err}" if @err.size > 0
+      end
+    end
+
+    alias_method :batch_train!, :batch_learn!
 
     ##
     # @raise  NotImplementedError
@@ -100,9 +124,16 @@ module Classifier
       ##
       # @param  [String] file
       # @return [void]
-      def self.create_css_file(file)
-        cmd = CMD_CRM + " '" + (OPT_LEARN % [CLASSIFICATION_TYPE, file]) + "'"
-        IO.popen(cmd, 'w') { |pipe| pipe.close }
+      def self.create_css_file(file,options={})
+        if options[:size].blank?
+          cmd = CMD_CRM + " '" + (OPT_LEARN % [CLASSIFICATION_TYPE, file]) + "'"
+        else
+          unless File.exist? file
+            cmd = CMD_CSSUTIL + OPT_SIZE + options[:size] + " #{file} " 
+          end
+        end
+        puts cmd if @debug
+        IO.popen(cmd, 'w') { |pipe| pipe.close } unless cmd.blank?
       end
 
       ##
