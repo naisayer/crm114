@@ -2,7 +2,7 @@ module Classifier class CRM114
   module VERSION
     MAJOR = 1
     MINOR = 0
-    TINY  = 3
+    TINY  = 4
     EXTRA = nil
 
     STRING = [MAJOR, MINOR, TINY].join('.')

@@ -7,6 +7,9 @@ module Classifier
 
     CMD_CRM = '/usr/bin/env crm'
     OPT_LEARN = '-{ learn %s ( %s ) }'
+
+    OPT_UNLEARN = '-{ learn %s ( %s ) }'  
+
     OPT_CLASSIFY = '-{ isolate (:stats:); classify %s ( %s ) (:stats:); match [:stats:] (:: :best: :prob:) /Best match to file .. \\(%s\\/([[:graph:]]+)\\%s\\) prob: ([0-9.]+)/; output /:*:best:\\t:*:prob:/ }'
 
     CMD_CSSUTIL = '/usr/bin/cssutil'
@@ -38,7 +41,6 @@ module Classifier
 
       if Dir.exists? @path
         @categories.each do |category|
-          puts "creating category css file"
           CRM114.create_css_file(css_file_path(category),{:size=>options[:size]}) unless File.exists?(css_file_path(category))
         end
       else
@@ -143,7 +145,7 @@ module Classifier
         else
           cmd = CMD_CSSUTIL + OPT_SIZE + options[:size].to_s + " #{file} " 
         end
-        puts cmd if @debug
+        puts cmd #if @debug
         IO.popen(cmd, 'w') { |pipe| pipe.close } unless cmd.nil?
       end
 
