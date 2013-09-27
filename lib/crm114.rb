@@ -154,7 +154,7 @@ module Classifier
       # @param  [#to_s] category
       # @return [String]
       def css_file_path(category)
-        lang = @language || ""
+        lang = ".#{@language}" || ""
         File.join(@path, category.to_s + lang + FILE_EXTENSION)
       end
 
