@@ -38,6 +38,7 @@ module Classifier
       @categories = categories.to_a.collect { |category| category.to_s.to_sym }
       @path = File.expand_path(options[:path] || '.')
       @debug = options[:debug] || false
+      @language = options[:language]
 
       if Dir.exists? @path
         @categories.each do |category|
@@ -85,7 +86,7 @@ module Classifier
         @result, @err = stdout.read, stderr.read
         puts "CRM114(batch_learn!) ERROR: #{@err}" if @err.size > 0
       end
-      puts @result
+      puts @result if @debug
     end
 
     alias_method :batch_train!, :batch_learn!
@@ -145,7 +146,7 @@ module Classifier
         else
           cmd = CMD_CSSUTIL + OPT_SIZE + options[:size].to_s + " #{file} " 
         end
-        puts cmd #if @debug
+        puts cmd if @debug
         IO.popen(cmd, 'w') { |pipe| pipe.close } unless cmd.nil?
       end
 
@@ -153,7 +154,8 @@ module Classifier
       # @param  [#to_s] category
       # @return [String]
       def css_file_path(category)
-        File.join(@path, category.to_s + FILE_EXTENSION)
+        lang = @language || ""
+        File.join(@path, category.to_s + lang + FILE_EXTENSION)
       end
 
   end
