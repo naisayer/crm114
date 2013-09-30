@@ -77,7 +77,10 @@ module Classifier
        options_string += " --#{key}=#{value} "
       end
 
-      cmd = (CMD_BATCH_LEARN % [operating_dir, trainer, spam_dir, notspam_dir, css_file_path(category), css_file_path("ok"),options_string])
+      lang=""
+      lang = ".#{options[:language]}" if options[:language] 
+
+      cmd = (CMD_BATCH_LEARN % [operating_dir, trainer, spam_dir, notspam_dir, css_file_path(category), css_file_path("ok#{lang}"),options_string])
       puts cmd if @debug
 
       Open3.popen3(cmd) do |stdin,stdout,stderr|
