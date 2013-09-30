@@ -38,7 +38,6 @@ module Classifier
       @categories = categories.to_a.collect { |category| category.to_s.to_sym }
       @path = File.expand_path(options[:path] || '.')
       @debug = options[:debug] || false
-      @language = options[:language]
 
       if Dir.exists? @path
         @categories.each do |category|
@@ -154,8 +153,7 @@ module Classifier
       # @param  [#to_s] category
       # @return [String]
       def css_file_path(category)
-        lang = ".#{@language}" || ""
-        File.join(@path, category.to_s + lang + FILE_EXTENSION)
+        File.join(@path, category.to_s + FILE_EXTENSION)
       end
 
   end
